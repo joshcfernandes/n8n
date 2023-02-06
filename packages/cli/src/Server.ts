@@ -530,7 +530,9 @@ class Server extends AbstractServer {
 				function getKey(header: any, callback: Function) {
 					jwkClient.getSigningKey(header.kid, (err: Error, key: any) => {
 						// eslint-disable-next-line @typescript-eslint/no-throw-literal
-						if (err) throw ResponseHelper.jwtAuthAuthorizationError(res, err.message);
+						if (err) {
+							return callback(err);
+						}
 
 						const signingKey = key.publicKey || key.rsaPublicKey;
 						callback(null, signingKey);
