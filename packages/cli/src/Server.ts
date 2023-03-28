@@ -160,6 +160,47 @@ import { LdapManager } from './Ldap/LdapManager.ee';
 
 const exec = promisify(callbackExec);
 
+const typeis = require('type-is');
+
+function parseNdjson(str: string): any[] {
+	const items = str.trim()
+		.split('\n')
+		.filter((item: string) => item !== ''); // ignore empty lines, even though the ndjson spec does not allow empty lines
+	return items.map((item, i) => {
+		try {
+			return JSON.parse(item);
+		} catch (e) {
+			throw new Error(`error parsing ndjson, while parsing item ${i + 1} of ${items.length}: ${e.message}`);
+		}
+	});
+}
+
+function onJsonErrorTryNdjson() {
+	return (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+		if (
+			typeis(req, ['application/json', 'application/x-ndjson']) &&
+			err.type === 'entity.parse.failed'
+		) {
+			let body = err.body;
+			const isNdJson = body.match(/^\s*\{[^\n]*}\s*(\n\s*\{[^\n]*}\s*)+$/);
+			if (isNdJson) {
+				try {
+					const result = parseNdjson(body);
+					req.body = result;
+					req.rawBody = Buffer.from(`[${result.join(',\n')}]`);
+					res.status(200);
+					next();
+					return;
+				} catch (e) {
+					console.error(e);
+				}
+			}
+		}
+		next(err);
+	};
+}
+
+
 class Server extends AbstractServer {
 	endpointPresetCredentials: string;
 
@@ -476,6 +517,9 @@ class Server extends AbstractServer {
 
 		const { restEndpoint, app } = this;
 		setupPushHandler(restEndpoint, app, isUserManagementEnabled());
+
+		// Support ndjson, by converting the ndjson to an array of objects (only if the body is indeed ndjson, with more than one line)
+		this.app.use(onJsonErrorTryNdjson());
 
 		// Make sure that Vue history mode works properly
 		this.app.use(
