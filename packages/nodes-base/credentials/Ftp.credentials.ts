@@ -38,5 +38,39 @@ export class Ftp implements ICredentialType {
 			},
 			default: '',
 		},
+		{
+			displayName: 'Connect using SSL/TLS',
+			name: 'secure',
+			type: 'options',
+			options: [
+				{
+					name: 'False',
+					value: false,
+					description: 'Disable secure connection',
+				},
+				{
+					name: 'True',
+					value: true,
+					description: 'Enable encryption for control & data connection',
+				},
+				{
+					name: 'Control',
+					value: 'control',
+					description: 'Enable encryption for control connection only',
+				},
+			],
+			default: false,
+		},
+		{
+			displayName: 'Ignore Certificate Validation',
+			name: 'disableCertificateValidation',
+			displayOptions: {
+				hide: {
+					secure: [false],
+				},
+			},
+			type: 'boolean',
+			default: false,
+		},
 	];
 }
