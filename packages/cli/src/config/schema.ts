@@ -91,13 +91,18 @@ export const schema = {
 				default: 'public',
 				env: 'DB_POSTGRESDB_SCHEMA',
 			},
+			migrationsRun: {
+				doc: 'PostgresDB Run Migrations',
+				format: Boolean,
+				default: true,
+				env: 'DB_POSTGRESDB_RUN_MIGRATIONS',
+      },
 			poolSize: {
 				doc: 'PostgresDB Pool Size',
 				format: Number,
 				default: 2,
 				env: 'DB_POSTGRESDB_POOL_SIZE',
 			},
-
 			ssl: {
 				enabled: {
 					doc: 'If SSL should be enabled. If `ca`, `cert`, or `key` are defined, this will automatically default to true',
@@ -161,6 +166,12 @@ export const schema = {
 				format: String,
 				default: 'root',
 				env: 'DB_MYSQLDB_USER',
+			},
+			migrationsRun: {
+				doc: 'MySQL Run Migrations',
+				format: Boolean,
+				default: true,
+				env: 'DB_MYSQLDB_RUN_MIGRATIONS',
 			},
 		},
 		sqlite: {

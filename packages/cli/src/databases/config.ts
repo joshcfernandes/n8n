@@ -33,6 +33,7 @@ const getDBConnectionOptions = (dbType: DatabaseType) => {
 					password: config.getEnv(`database.${configDBType}.password`),
 					host: config.getEnv(`database.${configDBType}.host`),
 					port: config.getEnv(`database.${configDBType}.port`),
+					migrationsRun: config.getEnv(`database.${configDBType}.migrationsRun`),
 			  };
 	return {
 		entityPrefix,
