@@ -5,4 +5,10 @@ export interface IPayment {
 	transaction_reference?: string;
 	private_notes?: string;
 	client_id?: string;
+	invoices?: IInvoice[];
+}
+
+export interface IInvoice {
+	invoice_id: string;
+	amount: number;
 }
