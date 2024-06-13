@@ -2,6 +2,7 @@ import { Service } from 'typedi';
 import { snakeCase } from 'change-case';
 import os from 'node:os';
 import { get as pslGet } from 'psl';
+import { GlobalConfig } from '@n8n/config';
 import type {
 	AuthenticationMethod,
 	ExecutionStatus,
@@ -58,6 +59,7 @@ function userToPayload(user: User): {
 @Service()
 export class InternalHooks {
 	constructor(
+		private readonly globalConfig: GlobalConfig,
 		private readonly telemetry: Telemetry,
 		private readonly nodeTypes: NodeTypes,
 		private readonly sharedWorkflowRepository: SharedWorkflowRepository,
@@ -94,7 +96,7 @@ export class InternalHooks {
 
 		const info = {
 			version_cli: N8N_VERSION,
-			db_type: config.getEnv('database.type'),
+			db_type: this.globalConfig.database.type,
 			n8n_version_notifications_enabled: config.getEnv('versionNotifications.enabled'),
 			n8n_disable_production_main_process: config.getEnv(
 				'endpoints.disableProductionWebhooksOnMainProcess',
@@ -126,7 +128,7 @@ export class InternalHooks {
 			},
 			n8n_deployment_type: config.getEnv('deployment.type'),
 			n8n_binary_data_mode: binaryDataConfig.mode,
-			smtp_set_up: config.getEnv('userManagement.emails.mode') === 'smtp',
+			smtp_set_up: this.globalConfig.userManagement.emails.mode === 'smtp',
 			ldap_allowed: authenticationMethod === 'ldap',
 			saml_enabled: authenticationMethod === 'saml',
 			license_plan_name: this.license.getPlanName(),
