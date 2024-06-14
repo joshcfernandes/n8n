@@ -28,6 +28,7 @@ import {
 import { SamlService } from '../saml.service.ee';
 import { SamlConfiguration } from '../types/requests';
 import { getInitSSOFormView } from '../views/initSsoPost';
+import { EventSender } from '@/eventbus/event-sender';
 
 @RestController('/sso/saml')
 export class SamlController {
@@ -36,6 +37,7 @@ export class SamlController {
 		private readonly samlService: SamlService,
 		private readonly urlService: UrlService,
 		private readonly internalHooks: InternalHooks,
+		private readonly eventSender: EventSender,
 	) {}
 
 	@Get('/metadata', { skipAuth: true })
@@ -126,10 +128,11 @@ export class SamlController {
 				}
 			}
 			if (loginResult.authenticatedUser) {
-				void this.internalHooks.onUserLoginSuccess({
+				this.eventSender.emit('user-logged-in', {
 					user: loginResult.authenticatedUser,
 					authenticationMethod: 'saml',
 				});
+
 				// Only sign in user if SAML is enabled, otherwise treat as test connection
 				if (isSamlLicensedAndEnabled()) {
 					this.authService.issueCookie(res, loginResult.authenticatedUser, req.browserId);
@@ -143,8 +146,8 @@ export class SamlController {
 					return res.status(202).send(loginResult.attributes);
 				}
 			}
-			void this.internalHooks.onUserLoginFailed({
-				user: loginResult.attributes.email ?? 'unknown',
+			this.eventSender.emit('user-login-failed', {
+				userEmail: loginResult.attributes.email ?? 'unknown',
 				authenticationMethod: 'saml',
 			});
 			throw new AuthError('SAML Authentication failed');
@@ -152,8 +155,8 @@ export class SamlController {
 			if (isConnectionTestRequest(req)) {
 				return res.send(getSamlConnectionTestFailedView((error as Error).message));
 			}
-			void this.internalHooks.onUserLoginFailed({
-				user: 'unknown',
+			this.eventSender.emit('user-login-failed', {
+				userEmail: 'unknown',
 				authenticationMethod: 'saml',
 			});
 			throw new AuthError('SAML Authentication failed: ' + (error as Error).message);
