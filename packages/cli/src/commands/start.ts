@@ -27,6 +27,7 @@ import { ExecutionRepository } from '@db/repositories/execution.repository';
 import { FeatureNotLicensedError } from '@/errors/feature-not-licensed.error';
 import { WaitTracker } from '@/WaitTracker';
 import { BaseCommand } from './BaseCommand';
+import { ExecutionRecoveryService } from '@/executions/execution-recovery.service';
 import type { IWorkflowExecutionDataProcess } from '@/Interfaces';
 import { ExecutionService } from '@/executions/execution.service';
 import { OwnershipService } from '@/services/ownership.service';
@@ -66,6 +67,8 @@ export class Start extends BaseCommand {
 	protected server = Container.get(Server);
 
 	private pruningService: PruningService;
+
+	private executionRecoveryService: ExecutionRecoveryService;
 
 	constructor(argv: string[], cmdConfig: Config) {
 		super(argv, cmdConfig);
@@ -340,6 +343,10 @@ export class Start extends BaseCommand {
 
 		if (config.getEnv('executions.mode') !== 'queue') return;
 
+		this.executionRecoveryService = Container.get(ExecutionRecoveryService);
+
+		this.executionRecoveryService.scheduleQueueRecovery();
+
 		const orchestrationService = Container.get(OrchestrationService);
 
 		await orchestrationService.init();
@@ -347,8 +354,14 @@ export class Start extends BaseCommand {
 		if (!orchestrationService.isMultiMainSetupEnabled) return;
 
 		orchestrationService.multiMainSetup
-			.on('leader-stepdown', () => this.pruningService.stopPruning())
-			.on('leader-takeover', () => this.pruningService.startPruning());
+			.on('leader-stepdown', () => {
+				this.pruningService.stopPruning();
+				this.executionRecoveryService.stopQueueRecovery();
+			})
+			.on('leader-takeover', () => {
+				this.pruningService.startPruning();
+				this.executionRecoveryService.scheduleQueueRecovery();
+			});
 	}
 
 	async catch(error: Error) {

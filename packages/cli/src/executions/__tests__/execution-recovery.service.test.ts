@@ -20,6 +20,7 @@ import { EventMessageWorkflow } from '@/eventbus/EventMessageClasses/EventMessag
 import type { EventMessageTypes as EventMessage } from '@/eventbus/EventMessageClasses';
 import type { WorkflowEntity } from '@/databases/entities/WorkflowEntity';
 import { NodeConnectionType } from 'n8n-workflow';
+import { mock } from 'jest-mock-extended';
 
 /**
  * Workflow producing an execution whose data will be truncated by an instance crash.
@@ -175,6 +176,7 @@ describe('ExecutionRecoveryService', () => {
 	let executionRecoveryService: ExecutionRecoveryService;
 	let push: Push;
 	let executionRepository: ExecutionRepository;
+	let logger: Logger;
 
 	beforeAll(async () => {
 		await testDb.init();
@@ -182,7 +184,8 @@ describe('ExecutionRecoveryService', () => {
 		mockInstance(InternalHooks);
 		push = mockInstance(Push);
 		executionRepository = Container.get(ExecutionRepository);
-		executionRecoveryService = new ExecutionRecoveryService(push, executionRepository);
+		logger = mock<Logger>();
+		executionRecoveryService = new ExecutionRecoveryService(push, executionRepository, logger);
 	});
 
 	afterEach(async () => {
