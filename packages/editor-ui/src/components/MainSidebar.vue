@@ -28,10 +28,7 @@
 
 			<template #beforeLowerMenu>
 				<BecomeTemplateCreatorCta v-if="fullyExpanded && !userIsTrialing" />
-				<ExecutionsUsage
-					v-if="fullyExpanded && userIsTrialing"
-					:cloud-plan-data="currentPlanAndUsageData"
-			/></template>
+			</template>
 			<template #menuSuffix>
 				<div>
 					<div
@@ -106,7 +103,7 @@
 </template>
 
 <script lang="ts">
-import type { CloudPlanAndUsageData, IExecutionResponse, IMenuItem, IVersion } from '@/Interface';
+import type { IExecutionResponse, IMenuItem, IVersion } from '@/Interface';
 import GiftNotificationIcon from './GiftNotificationIcon.vue';
 
 import { useMessage } from '@/composables/useMessage';
@@ -123,7 +120,6 @@ import { useUsersStore } from '@/stores/users.store';
 import { useVersionsStore } from '@/stores/versions.store';
 import { useWorkflowsStore } from '@/stores/workflows.store';
 import { useTemplatesStore } from '@/stores/templates.store';
-import ExecutionsUsage from '@/components/executions/ExecutionsUsage.vue';
 import BecomeTemplateCreatorCta from '@/components/BecomeTemplateCreatorCta/BecomeTemplateCreatorCta.vue';
 import MainSidebarSourceControl from '@/components/MainSidebarSourceControl.vue';
 import { hasPermission } from '@/utils/rbac/permissions';
@@ -136,7 +132,6 @@ export default defineComponent({
 	name: 'MainSidebar',
 	components: {
 		GiftNotificationIcon,
-		ExecutionsUsage,
 		MainSidebarSourceControl,
 		BecomeTemplateCreatorCta,
 		ProjectNavigation,
@@ -209,10 +204,8 @@ export default defineComponent({
 			];
 		},
 		mainMenuItems(): IMenuItem[] {
-			const items: IMenuItem[] = [];
-
 			const defaultSettingsRoute = this.findFirstAccessibleSettingsRoute();
-			const regularItems: IMenuItem[] = [
+			const items: IMenuItem[] = [
 				{
 					id: 'cloud-admin',
 					position: 'bottom',
@@ -318,19 +311,10 @@ export default defineComponent({
 					],
 				},
 			];
-			return [...items, ...regularItems];
+			return items;
 		},
 		userIsTrialing(): boolean {
 			return this.cloudPlanStore.userIsTrialing;
-		},
-		currentPlanAndUsageData(): CloudPlanAndUsageData | null {
-			const planData = this.cloudPlanStore.currentPlanData;
-			const usage = this.cloudPlanStore.currentUsageData;
-			if (!planData || !usage) return null;
-			return {
-				...planData,
-				usage,
-			};
 		},
 	},
 	async mounted() {
@@ -342,12 +326,7 @@ export default defineComponent({
 		}
 
 		void this.$nextTick(() => {
-			if (window.innerWidth < 900 || this.uiStore.isNodeView) {
-				this.uiStore.sidebarMenuCollapsed = true;
-			} else {
-				this.uiStore.sidebarMenuCollapsed = false;
-			}
-
+			this.uiStore.sidebarMenuCollapsed = window.innerWidth < 900;
 			this.fullyExpanded = !this.isCollapsed;
 		});
 
@@ -577,6 +556,12 @@ export default defineComponent({
 
 @media screen and (max-height: 470px) {
 	:global(#help) {
+		display: none;
+	}
+}
+
+@media screen and (max-height: 800px) {
+	:global(.n8n-menu-item:has(#settings)) {
 		display: none;
 	}
 }
